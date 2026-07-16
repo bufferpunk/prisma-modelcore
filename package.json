@@ -1,0 +1,28 @@
+{
+  "name": "prisma-modelcore",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Prisma + ModelCore, runtime data integrity for your database",
+  "keywords": ["prisma", "@prisma/client", "extension", "modelcore", "validation"],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "prisma": {
+    "generator": "./dist/generator.js"
+  },
+  "dependencies": {
+    "@bufferpunk/modelcore": "latest"
+  },
+  "peerDependencies": {
+    "@prisma/client": "latest"
+  },
+  "devDependencies": {
+    "@prisma/client": "latest",
+    "@bufferpunk/modelcore": "latest",
+    "@types/node": "latest",
+    "prisma": "latest",
+    "typescript": "^5.0.0"
+  }
+}
