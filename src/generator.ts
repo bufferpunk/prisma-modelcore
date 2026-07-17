@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import readline from 'node:readline'
 import { generateModel, generateEnum, generateRegistry, type PrismaModel, type PrismaEnum } from './parser'
 
 // ---------------------------------------------------------------------------
@@ -28,7 +29,7 @@ interface DMMFModel {
 
 interface DMMFEnum {
   name: string
-  values: string[]
+  values: any[]
 }
 
 interface GeneratorManifest {
@@ -47,14 +48,14 @@ interface GeneratorManifest {
 }
 
 // ---------------------------------------------------------------------------
-// Main
+// Main & Protocols
 // ---------------------------------------------------------------------------
 
 function main(): void {
   const arg = process.argv.find(a => a.startsWith('--generator-json='))
   if (!arg) {
-    process.stderr.write('Missing --generator-json argument\n')
-    process.exit(1)
+    runRpc()
+    return
   }
 
   const jsonPath = arg.split('=')[1]
@@ -67,10 +68,62 @@ function main(): void {
   }
 
   const outputDir = manifest.generator.output.value
+  generateFiles(manifest, outputDir)
+
+  // Signal success to Prisma
+  process.stdout.write(JSON.stringify({ version: '1.0.0', generator: { output: { value: outputDir } } }) + '\n')
+}
+
+function runRpc(): void {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    terminal: false,
+  })
+
+  rl.on('line', (line) => {
+    if (!line.trim()) return
+    try {
+      const request = JSON.parse(line)
+      if (request.method === 'getManifest') {
+        const response = {
+          jsonrpc: '2.0',
+          id: request.id,
+          result: {
+            manifest: {
+              prettyName: 'Prisma ModelCore Generator',
+              defaultOutput: 'src/models/generated',
+              requiresGenerators: ['prisma-client-js'],
+            },
+          },
+        }
+        process.stderr.write(JSON.stringify(response) + '\n')
+      } else if (request.method === 'generate') {
+        const params = request.params as GeneratorManifest
+        const outputDir = params.generator.output.value
+        generateFiles(params, outputDir)
+
+        const response = {
+          jsonrpc: '2.0',
+          id: request.id,
+          result: {},
+        }
+        process.stderr.write(JSON.stringify(response) + '\n')
+        process.exit(0)
+      }
+    } catch (e) {
+      process.stderr.write(`Failed to parse/process JSON-RPC: ${e}\n`)
+    }
+  })
+}
+
+function generateFiles(manifest: GeneratorManifest, outputDir: string): void {
   const dmmfModels = manifest.dmmf.datamodel.models
   const dmmfEnums = manifest.dmmf.datamodel.enums
 
-  const enums: PrismaEnum[] = dmmfEnums.map(e => ({ name: e.name, values: e.values }))
+  const enums: PrismaEnum[] = dmmfEnums.map(e => ({
+    name: e.name,
+    values: e.values.map((v: any) => typeof v === 'object' && v !== null ? v.name : v)
+  }))
   const enumNames = new Set(enums.map(e => e.name))
 
   const models: PrismaModel[] = dmmfModels.map(m => ({
@@ -92,9 +145,6 @@ function main(): void {
 
   const indexCode = generateRegistry(models, enums)
   fs.writeFileSync(path.join(outputDir, 'index.ts'), indexCode)
-
-  // Signal success to Prisma
-  process.stdout.write(JSON.stringify({ version: '1.0.0', generator: { output: { value: outputDir } } }) + '\n')
 }
 
 // ---------------------------------------------------------------------------
@@ -137,6 +187,11 @@ function dmmfFieldToPrismaField(field: DMMFField, enumNames: Set<string>): Prism
 }
 
 function dmmfDefaultToString(def: { name: string; args: any[] }): string {
+  if (typeof def !== 'object' || def === null) {
+    if (typeof def === 'string') return `"${def}"`;
+    return String(def);
+  }
+
   switch (def.name) {
     case 'autoincrement':
       return 'autoincrement()'
@@ -149,12 +204,12 @@ function dmmfDefaultToString(def: { name: string; args: any[] }): string {
     case 'nanoid':
       return 'nanoid()'
     default: {
-      if (def.args.length === 1) {
+      if (def.args && def.args.length === 1) {
         const arg = def.args[0]
         if (typeof arg === 'string') return `"${arg}"`
         return String(arg)
       }
-      return def.name
+      return def.name || String(def);
     }
   }
 }

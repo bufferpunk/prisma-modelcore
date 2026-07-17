@@ -9,3 +9,6 @@ dist/
 package-lock.json
 *.tgz
 dev.db
+playground/
+bun.lock
+bun.lockb

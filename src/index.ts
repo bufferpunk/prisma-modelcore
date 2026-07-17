@@ -62,6 +62,17 @@ export function modelcoreExtension(registry: Record<string, typeof Base>) {
 // Update validation — field-level using ModelCore's runValidate
 // ---------------------------------------------------------------------------
 
+const PRISMA_OPERATORS = new Set([
+  'set', 'increment', 'decrement', 'multiply', 'divide', 'push', 'unset',
+  'connect', 'disconnect', 'create', 'connectOrCreate', 'delete', 'update', 'upsert', 'updateMany', 'deleteMany'
+])
+
+function isPrismaOperator(value: unknown): boolean {
+  if (value === null || typeof value !== 'object' || Array.isArray(value) || value instanceof Date) return false
+  const keys = Object.keys(value as object)
+  return keys.length > 0 && keys.every(k => PRISMA_OPERATORS.has(k))
+}
+
 function validateUpdateData(
   model: string,
   operation: string,
@@ -85,6 +96,7 @@ function validateUpdateData(
   for (const [key, value] of Object.entries(data) as [string, any][]) {
     const conf = schema[key]
     if (!conf) continue
+    if (isPrismaOperator(value)) continue
 
     runValidate.call(Model.prototype, conf, value, key, false)
   }
@@ -111,5 +123,10 @@ function wrapSingle(
 ): any {
   const Model = registry[modelName]
   if (!Model) return result
-  return Model.createFrom(result)
+  try {
+    return Model.createFrom(result)
+  } catch (error) {
+    console.warn(`[modelcoreExtension] Warning: failed to hydrate model "${modelName}":`, error)
+    return result
+  }
 }
