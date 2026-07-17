@@ -9,3 +9,7 @@ dist/
 package-lock.json
 *.tgz
 dev.db
+playground/dev.db
+playground/src/models/generated/
+bun.lock
+bun.lockb

@@ -181,15 +181,21 @@ import Base, { type SchemaDefinition } from '@bufferpunk/modelcore'
 import { Post } from './Post'
 
 export class User extends Base {
-  static schema = {
-    id:       { type: Number, immutable: true, optional: true },
-    name:     { type: String, min: 2, max: 80 },
-    email:    { type: String },
-    role:     { type: String, enum: Role, optional: true },
-    posts:    { type: Array, values: { type: Post, coerce: true }, optional: true },
-    bio:      { type: String, optional: true },
-    score:    { type: Number, optional: true },
-  } as const satisfies SchemaDefinition
+  private static _schema: SchemaDefinition | null = null;
+  static get schema(): SchemaDefinition {
+    if (!User._schema) {
+      User._schema = {
+        id:    { type: Number, immutable: true, optional: true },
+        name:  { type: String, min: 2, max: 80 },
+        email: { type: String },
+        role:  { type: String, enum: Role, optional: true },
+        posts: { type: Array, values: { type: Post, coerce: true }, optional: true },
+        bio:   { type: String, optional: true },
+        score: { type: Number, optional: true },
+      } as const satisfies SchemaDefinition;
+    }
+    return User._schema;
+  }
 }
 ```
 
@@ -309,6 +315,16 @@ ModelCore's `runValidate(conf, value, path, isNew)` validates a single field aga
 - **`select` queries**: Partial results may omit required schema fields, causing `Model` instantiation to throw when hydrating. Use `include` for full wrapping, or make fields `optional` in your schema.
 - **`_count` includes**: Passed through as-is (not a model).
 - **Raw queries**: `$queryRaw` / `$executeRaw` have no model context — not intercepted.
+
+---
+
+## Compatibility & Resiliency Features
+
+- **Prisma 7 Ready:** Fully supports standard JSON-RPC generator protocols.
+- **Atomic Operations & Nested Relations:** Automatically identifies database-level actions (e.g. `{ increment: 1 }`, `{ connect: { id: 3 } }`) during validation loops and safely bypasses them to avoid runtime schema mismatches.
+- **Hydration Boundary Resilience:** An runtime try/catch mechanism in result wrapping guards read pipelines. If a database record does not align with your schema class config, it prints a console warning and falls back to returning the raw database payload directly instead of crashing.
+
+For more details on generator protocols, circular relationship resolution, and runtime interception flow, see [Architecture and Design](docs/architecture.md).
 
 ---
 
