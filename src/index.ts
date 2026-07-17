@@ -86,8 +86,7 @@ function validateUpdateData(
     const conf = schema[key]
     if (!conf) continue
 
-    const ctx = { constructor: Model }
-    runValidate.call(ctx, conf, value, key, false)
+    runValidate.call(Model.prototype, conf, value, key, false)
   }
 }
 
