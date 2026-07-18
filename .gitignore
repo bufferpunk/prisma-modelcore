@@ -13,3 +13,6 @@ playground/dev.db
 playground/src/models/generated/
 bun.lock
 bun.lockb
+
+# Local PR description — not part of the codebase
+PULL_REQUEST.md
