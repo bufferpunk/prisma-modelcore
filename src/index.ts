@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client/extension'
-import Base from '@bufferpunk/modelcore'
+import { Base } from '@bufferpunk/modelcore'
 
 // ---------------------------------------------------------------------------
 // Operation classification

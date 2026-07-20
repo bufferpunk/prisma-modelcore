@@ -1,6 +1,6 @@
 {
   "name": "prisma-modelcore",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "",
   "description": "Prisma + ModelCore, runtime data integrity for your database",
   "keywords": [
@@ -19,11 +19,11 @@
     "generator": "./dist/generator.js"
   },
   "peerDependencies": {
-    "@bufferpunk/modelcore": "^1.6.1",
+    "@bufferpunk/modelcore": "latest",
     "@prisma/client": "latest"
   },
   "devDependencies": {
-    "@bufferpunk/modelcore": "^1.6.1",
+    "@bufferpunk/modelcore": "latest",
     "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@prisma/client": "latest",
     "@types/node": "latest",
