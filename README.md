@@ -177,18 +177,19 @@ No transformation needed — instances ARE the data.
 ### Model files (`src/models/generated/User.ts`)
 
 ```ts
-import Base, { type SchemaDefinition } from '@bufferpunk/modelcore'
+import { Base, type SchemaDefinition } from '@bufferpunk/modelcore'
 import { Post } from './Post'
+import { RoleValues } from './Role'
 
 export class User extends Base {
   private static _schema: SchemaDefinition | null = null;
-  static get schema(): SchemaDefinition {
+  static override get schema(): SchemaDefinition {
     if (!User._schema) {
       User._schema = {
         id:    { type: Number, immutable: true, optional: true },
         name:  { type: String, min: 2, max: 80 },
         email: { type: String },
-        role:  { type: String, enum: Role, optional: true },
+        role:  { type: String, enum: RoleValues, optional: true },
         posts: { type: Array, values: { type: Post, coerce: true }, optional: true },
         bio:   { type: String, optional: true },
         score: { type: Number, optional: true },

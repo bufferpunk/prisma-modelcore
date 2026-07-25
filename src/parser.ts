@@ -33,7 +33,7 @@ export interface PrismaEnum {
   values: string[];
 }
 
-function cleanOldGeneratedFiles(outputDir: string): void {
+export function cleanOldGeneratedFiles(outputDir: string): void {
   if (!fs.existsSync(outputDir)) return;
   try {
     const files = fs.readdirSync(outputDir);
@@ -79,7 +79,7 @@ export function generate() {
 // Parsing
 // ---------------------------------------------------------------------------
 
-function parseSchema(schema: string) {
+export function parseSchema(schema: string) {
   const models: PrismaModel[] = [];
   const enumsList: PrismaEnum[] = [];
 
